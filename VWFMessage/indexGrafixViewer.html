@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>BIN Viewer 4 SNES</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+	<canvas width="256" height="256" id="draw"></canvas><br>
+	<input type="file" id="file" onchange="binviewer.open(this)"> Open GFX<br>
+	<input type="file" id="file" onchange="binviewer.openPalette(this)"> Open Palette<br>
+	
+	<script>
+		binviewer = {
+			
+			fileInput: document.getElementById("file"),
+			
+			buffer1bpp: document.createElement("canvas"),
+			buffer2bpp: document.createElement("canvas"),
+			buffer3bpp: document.createElement("canvas"),
+			buffer4bpp: document.createElement("canvas"),
+			buffer7bpp: document.createElement("canvas"),
+			buffer8bpp: document.createElement("canvas"),
+			
+			palette: [],
+			
+			openPalette: function (obj) {
+				var file = obj.files[0]
+				fileReader = new FileReader()
+				
+				fileReader.onload = function(data) {
+					var palette = data.target.result
+					for (var i = 0; i < 768; i++) {
+						palData[i] = palette[i].charCodeAt()
+					}
+				}
+				
+				fileReader.readAsBinaryString(file)
+			},
+		
+			open: function (obj) {
+				var file = obj.files[0]
+				fileReader = new FileReader()
+				
+				fileReader.onload = function(data) {
+					palBefore = palData
+					var palette = data.target.result
+					for (var i = 0; i < 768; i++) {
+						palData[i] = palette[i].charCodeAt()
+					}
+					pal32Cols = palData.slice(0,96)
+					paletteDraw()
+				}
+				
+				fileReader.readAsBinaryString(file)
+			}
+		}
+	</script>
+</body>
+</html>

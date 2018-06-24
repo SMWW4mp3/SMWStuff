@@ -1,0 +1,13 @@
+Here are some codes to do some formating:
+
+<br> - Force a line-break
+<hr> - Horizontal Line (forces a line-break)
+<span id="b">[yourtext]</span> - Bold Text.
+<span id="i">[yourtext]</span> - Oblique Text.
+<span id="bi">[yourtext]</span> - Bold and Oblique Text.
+<mark>[yourtext]</mark> - Marks some important stuff.
+
+Note to Translators:
+DO NOT ADD YOUR OWN STYLES TO THIS!
+I WON'T UPDATE THE STYLE JUST BECAUSE YOU WANT TO HAVE SOMETHING SPECIAL!
+-W4mp3

@@ -1,0 +1,126 @@
+html{
+background-color: #000;
+font-size: 16px;
+}
+
+body{
+background-color: #FFF;
+width: 960px;
+margin: auto;
+border-left: 4px solid #888;
+border-right: 4px solid #888;
+padding: 0 8px;
+box-shadow: 0 0 8px #FFF;
+
+}
+
+header {
+text-align: right;
+}
+
+h1 {
+padding-left: 8px;
+color: #48F;
+text-shadow: 1px 1px 2px #000,
+              1px -1px 2px #000,
+              -1px 1px 2px #000,
+              -1px -1px 2px #000;
+text-align: center;
+margin: 0;
+}
+
+h2 {
+padding-left: 8px;
+color: #FFF;
+text-shadow: 1px 1px 2px #000,
+              1px -1px 2px #000,
+              -1px 1px 2px #000,
+              -1px -1px 2px #000;
+margin: 0.5em;
+}
+
+h3 {
+padding-left: 8px;
+color: #08F;
+text-shadow: 1px 0 1px #000,
+              0 -1px 1px #000,
+              0 1px 1px #000,
+              -1px 0 1px #000;
+margin: 0.5em;
+}
+
+hr{
+  border: 1px solid #888;
+  margin: 0 -16px;
+}
+
+mark{
+background-color: transparent;
+color: #F00;
+}
+
+footer {
+color: #888;
+}
+#selector{
+font-weight: bold;
+}
+
+#selector a{
+border: 2px solid #888;
+border-radius: 4px 4px 0 0;
+border-bottom-color: transparent;
+padding: 0 2px;
+background-color: #EEE;
+}
+
+a:hover {
+text-shadow: 0 0 2px #FC0;
+cursor: pointer;
+}
+
+#gameplay , #sfx, #sprite, #fillbox, #end, #titlescreen, #player, #custom{
+border: 2px solid #888;
+border-radius: 0 4px 4px 4px;
+background-color: #EEE;
+background: linear-gradient(#EEE,#BBB);
+padding: 0 16px;
+visibility: hidden;
+display: none;
+}
+
+#fillbox{
+visibility: visible;
+display: block;
+}
+
+#b{
+font-weight: bold;
+}
+
+#i{
+font-style: oblique;
+}
+
+#bi{
+font-weight: bold;    
+font-style: oblique;
+}
+
+#example{ 
+  border: 2px solid #888;
+  background-color: #BBB;
+  background: linear-gradient(#DFD, #AFA);
+  padding-left: 16px;
+  padding-right: -32px;
+  font-family: monospace;
+}
+
+textarea{
+  background-color: #DDD;
+  background: linear-gradient(#DDD, #CCC);
+  border: 2px solid #888;
+  max-width: calc(100% - 8px);
+  min-width: calc(100% - 8px);
+  min-height: 360px;
+}

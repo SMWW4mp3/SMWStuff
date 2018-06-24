@@ -1,0 +1,7 @@
+Language		|	Author
+------------------------+-------------------------------
+English			|	W4mp3
+German			|	W4mp3
+
+To add your own language you have to edit "en.php" with any text editor and edit all Values in Quotes. Then let it proof-read by someone, just in case you did something wrong. Then send it to me and I will add it.
+-W4mp3

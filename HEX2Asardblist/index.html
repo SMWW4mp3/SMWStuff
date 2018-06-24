@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>HEX 2 Asar DB list</title>
+</head>
+<body>
+<select id="m">
+	<option>Straight</option>
+	<option>Tilemap (Tile,Properties)</option>
+</select>
+<textarea id="in" onchange="run(this.value)"></textarea>
+<textarea id="out" readonly></textarea>
+<script>
+function run (v) {
+	console.log(v)
+	
+	if (v == undefined) {
+		return false
+	}
+	
+	document.getElementById("out").value = ""
+	
+	var arr = v.split(" ")
+	
+	switch (document.getElementById("m").selectedIndex) {
+		case 0:
+			document.getElementById("out").value = "db $"
+			document.getElementById("out").value +=arr.join(",$")
+			break
+		case 1:
+			document.getElementById("out").value = "Tilemap:\ndb $"
+			var tmap = []
+			var prop = []
+			
+			for (var i = 0; i < arr.length; i++) {
+				if (i%2 == 0) {
+					tmap.push(arr[i])
+				} else {
+					prop.push(arr[i])
+				}
+			}
+			
+			document.getElementById("out").value += tmap.join(",$")
+			document.getElementById("out").value += "\n\nTileproperties:\ndb $"
+			document.getElementById("out").value += prop.join(",$")
+			
+		default:
+			return false
+	}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>4bpp SNES Viewer</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<style>
+		canvas {
+			border: 8px solid #000;
+		}
+	</style>
+</head>
+<body onload="binviewer.init()">
+	<canvas width="256" height="256" id="draw"></canvas><canvas width="256" height="256" id="palette"></canvas><br>
+	Palette: <input type="number" min=0 max=15 value=0 id="pal" onchange="binviewer.palindex = this.value;binviewer.updateGFX()">
+	Tilesize: <input type="number" min=8 max=16 value=8 step=8 id="tilesize" onchange="binviewer.updateAllTiles()">px<br><br>
+	GFX File:<input type="file" id="file" onchange="binviewer.openGFX(this)"><br>
+	Palette: <input type="file" id="filePal" onchange="binviewer.openPalette(this)"><br>
+	PlayerTilemap: <input type="file" id="fileTiles" onchange="binviewer.openTileMaps(this)"><br>
+	<div>
+		<table>
+			<tr>
+				<th></th>
+				<th>Tile</th>
+				<th>Y-Flip</th>
+				<th>X-Flip</th>
+				<th>Priority</th>
+				<th>Palette</th>
+				<th>Page</th>
+			</tr>
+			<tbody id="tilemaps_output">
+			
+			</tbody>
+		</table>
+	</div>
+	<script>
+		binviewer = {
+			
+			draw: document.getElementById("draw").getContext("2d"),
+			fileInput: document.getElementById("file"),
+			palCanvas: document.getElementById("palette").getContext("2d"),
+			tempcanvas: document.createElement("canvas"),
+			tilecanvas: document.createElement("canvas"),
+			temp: "",
+			palindex: 0,
+						
+			data: [],
+			palette: [],
+			tiles: [],
+			tilesCanvas: [],
+			
+			init: function () {
+				this.draw.imageSmoothingEnabled = false
+				this.temp = this.tempcanvas.getContext("2d")
+			},
+			
+			toHex: function (dec) {
+				
+				dec = dec.toString(16)
+			
+				if (dec.length % 2)	dec = "0"+dec
+				
+				return "0x"+dec.toUpperCase()
+			},
+		
+			drawPalette: function () {
+				this.palCanvas.clearRect(0,0,256,224)
+		
+				for (var x = 0; x < 16; x++) {
+					for (var y = 0; y < 16; y++) {
+						this.palCanvas.fillStyle = "rgb("+binviewer.palette[y*48+x*3]+","+binviewer.palette[y*48+x*3+1]+","+binviewer.palette[y*48+x*3+2]+")"
+						this.palCanvas.fillRect(x*16,y*16,16,16)
+					}
+				}
+				
+				// Draw checkerboard pattern over first color of palettes (it is always transparent)
+				
+				this.palCanvas.fillStyle = "rgba(0,0,0,0.1)"
+				
+				for (var x = 0; x < 32; x++) {
+					if (x % 2) {
+						this.palCanvas.fillRect(0,x*8,8,8)
+					} else {
+						this.palCanvas.fillRect(8,x*8,8,8)
+					}
+				}
+			},
+			
+			getPaletteRow: function () {
+				return this.palette.slice(this.palindex * 48, this.palindex * 48+48)
+			},
+			
+			
+			gfx2tile4bpp: function (tile) {
+				
+				var gfx = []
+				var tempcanvas = document.createElement("canvas")
+				var tmp = tempcanvas.getContext("2d")
+				tempcanvas.width = 8
+				tempcanvas.height = 8
+				
+				for (var i = 0; i < 0x20; i++) {
+					gfx.push(tile.charCodeAt(i))
+				}
+				
+				var pixels = [];
+				
+				for (var i = 0; i < 0x08; i++) {
+					var pixelData = [
+														((gfx[i*2] & 0x80) >> 7) + ((gfx[i*2+0x01] & 0x80) >> 6) + ((gfx[i*2+0x10] & 0x80) >> 5 )+ ((gfx[i*2+0x11] & 0x80) >> 4),
+														((gfx[i*2] & 0x40) >> 6) + ((gfx[i*2+0x01] & 0x40) >> 5) + ((gfx[i*2+0x10] & 0x40) >> 4 )+ ((gfx[i*2+0x11] & 0x40) >> 3),
+														((gfx[i*2] & 0x20) >> 5) + ((gfx[i*2+0x01] & 0x20) >> 4) + ((gfx[i*2+0x10] & 0x20) >> 3 )+ ((gfx[i*2+0x11] & 0x20) >> 2),
+														((gfx[i*2] & 0x10) >> 4) + ((gfx[i*2+0x01] & 0x10) >> 3) + ((gfx[i*2+0x10] & 0x10) >> 2 )+ ((gfx[i*2+0x11] & 0x10) >> 1),
+														((gfx[i*2] & 0x08) >> 3) + ((gfx[i*2+0x01] & 0x08) >> 2) + ((gfx[i*2+0x10] & 0x08) >> 1 )+ ((gfx[i*2+0x11] & 0x08)     ),
+														((gfx[i*2] & 0x04) >> 2) + ((gfx[i*2+0x01] & 0x04) >> 1) + ((gfx[i*2+0x10] & 0x04)      )+ ((gfx[i*2+0x11] & 0x04) << 1),
+														((gfx[i*2] & 0x02) >> 1) + ((gfx[i*2+0x01] & 0x02)     ) + ((gfx[i*2+0x10] & 0x02) << 1 )+ ((gfx[i*2+0x11] & 0x02) << 2),
+														((gfx[i*2] & 0x01)     ) + ((gfx[i*2+0x01] & 0x01) << 1) + ((gfx[i*2+0x10] & 0x01) << 2 )+ ((gfx[i*2+0x11] & 0x01) << 3)
+													]
+					pixels.push(pixelData)
+				}
+				
+				for (var y = 0; y < 0x08; y++) {
+					for (var x = 0; x < 0x08; x++) {
+						tmp.fillStyle = "rgb(" + (pixels[y][x]*16) + ",0,0)"
+						tmp.fillRect(x,y,1,1)
+					}
+				}
+				
+				//console.log(pixels)
+				
+				return tempcanvas
+				
+			},
+			
+			openGFX: function (obj) {
+				var file = obj.files[0]
+				fileReader = new FileReader()
+				
+				fileReader.onload = function(data) {
+					var gfx = data.target.result
+					
+					binviewer.tempcanvas.width = 128
+					binviewer.tempcanvas.height = 4096
+					
+					console.log(gfx.length)
+					
+					for (var i = 0; i < gfx.length; i+= 0x20) {
+						
+						//console.log(i,Math.floor(i / 0x20) % 128,Math.floor(i / 0x200))
+						binviewer.temp.drawImage(binviewer.gfx2tile4bpp(gfx.substr(i,0x20)),Math.floor(i / 0x20) * 8 % 128, Math.floor(i / 0x200) * 8)
+						
+
+					}
+					
+					//binviewer.draw.drawImage(binviewer.tempcanvas,0,0,256,128)
+					
+					if (binviewer.palette != []) {
+						binviewer.updateGFX()
+					}
+					
+				}
+				
+				fileReader.readAsBinaryString(file)
+			},
+			
+			openPalette: function (obj) {
+				var file = obj.files[0]
+				fileReader = new FileReader()
+				
+				fileReader.onload = function(data) {
+					var palette = data.target.result
+					for (var i = 0; i < 768; i++) {
+						binviewer.palette[i] = palette[i].charCodeAt()
+					}
+					
+					binviewer.drawPalette()
+					
+				}
+				
+				fileReader.readAsBinaryString(file)
+			},
+			
+			openTileMaps: function (obj) {
+				var file = obj.files[0]
+				fileReader = new FileReader()
+				
+				fileReader.onload = function(data) {
+					var tiles = data.target.result
+					
+					for (var i = 0; i < data.target.result.length; i++) {
+						binviewer.tiles[i] = tiles[i].charCodeAt()
+					}
+
+					binviewer.updateAllTiles()
+					
+				}
+				
+				fileReader.readAsBinaryString(file)
+			},
+			
+			updateGFX: function () {
+								
+				var pal = binviewer.getPaletteRow()
+				
+				var colors = []
+				
+				for (var i = 0; i < pal.length; i+=3) {
+					colors.push([pal[i],pal[i+1],pal[i+2]])
+				}
+				
+				//console.log(colors.length,colors)
+				
+				var imgdata = binviewer.temp.getImageData(0,0,binviewer.tempcanvas.width,64)
+				
+				for (var i = 0; i < imgdata.data.length; i+=4) {
+					var col = colors[Math.floor(imgdata.data[i]/16)]
+					imgdata.data[i]   = col[0]
+					imgdata.data[i+1] = col[1]
+					imgdata.data[i+2] = col[2]
+					imgdata.data[i+3] = 255
+				}
+				
+				var tmpcanvas = document.createElement("canvas")
+				tmpcanvas.width=128
+				tmpcanvas.height=64
+				tmpcanvas.getContext("2d").putImageData(imgdata,0,0)
+				
+				binviewer.draw.drawImage(tmpcanvas,0,0,256,128)
+				
+			},
+			
+			updateAllTiles: function () {
+				this.tilecanvas = []
+				var size = document.getElementById("tilesize").value;
+				for (var i = 0; i < this.tiles.length; i+=2) {
+					
+					var data = this.drawTile(this.tiles[i],this.tiles[i+1])
+					this.tilecanvas.push(data)
+				}
+				
+				console.log(this.tilecanvas.length)
+				
+				document.getElementById("tilemaps_output").innerHTML = ""
+				
+				for (var i = 0; i < this.tilecanvas.length; i++) {
+				
+					var t = this.tilecanvas[i]
+				
+					row = document.createElement("tr")
+					
+					col = document.createElement("td");
+					col.appendChild(t.canvas)
+					row.appendChild(col)
+					
+					col = document.createElement("td");
+					col.innerHTML = this.toHex(t.tile)
+					row.appendChild(col)
+					
+					col = document.createElement("td");
+					col.innerHTML = t.yflip
+					row.appendChild(col)
+					
+					col = document.createElement("td");
+					col.innerHTML = t.xflip
+					row.appendChild(col)
+					
+					col = document.createElement("td");
+					col.innerHTML = t.priority
+					row.appendChild(col)
+					
+					col = document.createElement("td");
+					col.innerHTML = this.toHex(t.palette)
+					row.appendChild(col)
+					
+					col = document.createElement("td");
+					col.innerHTML = t.page
+					row.appendChild(col)
+					
+					document.getElementById("tilemaps_output").appendChild(row)
+				}
+				
+				
+			},
+			
+			drawTile: function (tile,properties) {
+				if (this.data == [] || this.palette == [] || this.tiles == []) {
+					return false;
+				}
+				var size = document.getElementById("tilesize").value
+				
+				var tileinfo = {
+					tile: tile,
+					palette: ((properties & 0x0E) >> 1) + 8, // lower half of palette only
+					xflip: (properties & 0x40) >> 6,
+					yflip: (properties & 0x80) >> 7,
+					priority: (properties & 0x30) >> 4,
+					page: (properties & 0x01),
+				}
+				
+				var gfxdata = this.getTile(tile,size)
+				
+				var tiledata = this.applyPallete(gfxdata,tileinfo.palette)
+				
+				var c = document.createElement("canvas")
+				c.width = size
+				c.height = size
+				
+				c.getContext("2d").scale([1,-1][tileinfo.xflip],[1,-1][tileinfo.yflip])
+				
+				c.getContext("2d").putImageData(
+																			tiledata,
+																			tileinfo.xflip*16,
+																			tileinfo.yflip*16
+																		)
+				
+				tileinfo.canvas = c
+				
+				return tileinfo
+				
+			},
+			
+			getTile: function (tile,size) {
+				
+				var x = tile % 16
+				var y = tile - x;
+				
+				var imgdata = this.temp.getImageData(x*16,y*16,size,size)
+				
+				console.log(x*16,y*16,imgdata);
+				
+				return imgdata
+
+			},
+			
+			applyPallete: function (gfxdata,palette) {
+				
+				colors = this.getPaletteRow(palette)
+				
+				for (var i = 0; i < gfxdata.data.length; i+=4) {
+					var col = colors[Math.floor(gfxdata.data[i]/16)]
+					gfxdata.data[i]   = col[0]
+					gfxdata.data[i+1] = col[1]
+					gfxdata.data[i+2] = col[2]
+					gfxdata.data[i+3] = 255
+				}
+				
+				return gfxdata
+
+			},
+		}
+		
+	</script>
+</body>
+</html>

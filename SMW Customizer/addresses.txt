@@ -1,0 +1,51 @@
+x001028
+[AD] Disable | [CE] Enable SMW Timer
+name=time
+
+x000F8B + x00102E
+[28,28]Timer Speed
+name=timer_speed
+
+x00105C
+[FF] Allow | [00] Disallow Timer Speedup
+name=timer_speedup
+
+x00106B
+[22 06 F6 00] Do | [EA EA EA EA] Don't kill Mario when time is 0
+name=timer_kill
+
+x00229C
+[B0] Time before you can Skip the Intro Message (Level C5) x 4
+name=timer_intro
+
+x00242D
+[3C] Time before you can pause again
+name=time_pause
+
+x00AD1B
+[B0] Timer for P-Switches
+name=time_pswitch
+
+x0010DB
+[20 12 90] Enable | [EA EA EA] Disable Score on Statusbar
+name=score_statusbar
+
+x007516
+[0F] 3-UP Moon Score Value
+name=score_3up
+
+x011656
+[00] Score added for hitting an enemy from below or smacking an enemy with the cape
+name=score_below_hit
+
+x00112F
+[EE E4 18] Change to [EA EA EA] to not gain a life after collecting enough for one.
+name=coins_1up_remove
+
+x00117E
+[] Do | [EA EA EA EA EA EA] Don't write coins to status bar. 
+
+
+x00101A
+[64] How many coins you need to get an 1up
+name=coins_1up

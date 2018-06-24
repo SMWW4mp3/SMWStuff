@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SMW - Background Castle Flames - Simulation</title>
+	<style>
+		* {
+			box-sizing: border-box;
+			font-family: monospace;
+		}
+		img {
+			display: none;
+		}
+		.titlebar {
+			width: 100%;
+			background: #19F;
+			color: #FFF;
+			padding:8px;
+		}
+		#debug_window,canvas{
+			border: 2px solid #888;
+			box-shadow: 0 2px 8px #000;
+			float: left;
+			height: 448px;
+			font-weight: bold;
+			min-width: 512px;
+		}
+		th {
+			color: #FFF;
+			background: #19F;
+		}
+		tr:nth-child(2n+1){
+			background: rgba(0,0,0,0.1)
+		}
+	</style>
+</head>
+<body>
+	<canvas id="draw" width=512 height=448></canvas>
+	<div id="debug_window" style="margin-left: 16px;">
+		<div class="titlebar">
+			Debug Window
+		</div>
+		<div id="debug_content">
+			Debug Overlay: <input type="checkbox" id="debug"><br>
+			Frame: <span id="frame">-</span><br>
+			RNG: <span id="rng">-</span><br>
+			<table style="width:100%;border-collapse: collapse">
+				<tr>
+					<th>ID</th>
+					<th>X</th>
+					<th>Y</th>
+					<th>CurrentFrame</th>
+					<th>Tile</th>
+					<th style="width: 20%;">Prop</th>
+				</tr>
+				<tr id="c1"></tr>
+				<tr id="c2"></tr>
+				<tr id="c3"></tr>
+				<tr id="c4"></tr>
+			</table>
+		</div>
+	</div>
+	<hr style="clear:both;">
+	Pause: <input type="checkbox" id="paused"><button onclick="tick();frame=(frame+1)%256;$('paused').checked = 'checked';">Next Frame</button><br>
+
+	
+	<img id="candleframes" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAAgCAYAAADaInAlAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwgAADsIBFShKgAAAABl0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMC4xMkMEa+wAAAL+SURBVHhe7ZJRbsMwDEO72+9Iu9k+uxYjNZeWElt2UmAOgfdhRSZlIbf7/b40y8tbykosL28pK7G8vKWsxPLylrISy8tbykosL28pK7G8vKWsxPLyltLD9+fH/YnWj2J23og4C45vVXoWbyk9MFjrRzE7b0ScBce3Kj2Lt5QWGEj0+1FoLtG+VkakM6B8ijSb4HO7vKW0oMH6/Sg0l2hfKyPSGVA+RZpN8Lld3lK28EKfaN9RMO/rMfqT79vj/CQ5x4iYqeDzIbIcvNv2kM32lrKFDSBo31Ew7/oBfjntB7BgoMHafxQ2gy4A5955RsQs3QVB2xSZ78670d4ubykeNgDQR2v/UdgMO4vQexEjYpbugqBtisx3591ob5e3FA8GVI+VAfTebKpcoHPpvYiMqhlw1hnQPkVVRvH2cga0t8tbikc1AM46gN6bTZULdC69F5FRNQPOOgPap6jKKN5ezoD2dnlLKQmDUX8Zoqirzyyi3Gg+va/0KMrWus2COq6nFHrjbGSzvKWU0LgKRv1liKKuPrOIcqP59L7Soyhb6zYL6rieUuiNs5HN8pZSQuMwOAL31G8U+mrOS3ZR1/tKi8KMANsV7sEmpTBb6zjjWru8pZTQ+PoBCu8d/uUP8BLeAu6pXxb6VT8i6kZnfosq71ZwDzYpVdk8Sz3903lLKdGgZnBP/bLQ7/oBBNTP+wF41noE+tS3F/qc+QNUnhHs036cYZdS5Kn16wcgnblbqjwj2Kf9OMMupchT6+/7AZRgIPXtRf0N1vU7zuqjbIke9pYoU5E+2KUUeVZ1+Y7r+/KWUlIF8RyBvusH+DvDLqXIs6rLd1zfl7eUEho2LwHfrR919e2FPuob1fV+xJYq7+TbYTckeql3VMe1fXlLKakCkktQ317oo75RXe9HbKnyTr4ddkOil3pHdVzbl7cUDw2yQHn0J2C/+ozCPJ0nm9cievNtlilvtzr6cX2q6K1ZnAVt7fKW4qHBNoAs4foB/mbB9amit2ZxFrQ16nb7AZM02hvz6rmuAAAAAElFTkSuQmCC">
+	
+	<script>
+		candles = [];
+		frame = 0;
+		random = 0x1234;
+		random2 = 0xAAAA;
+		colors = ["#F00","#0F0","#19F","#FF0","#F0F","#0FF"];
+		data = {
+			CastleFlameFlicker:	[0x03,0x07,0x07,0x07,0x0F,0x07,0x07,0x0F],
+			CastleFlameTiles:	[0,1,2,3],
+			CastleFlameGfxProp:	[0,0,1,1],
+			flameXPositions:	[0x50,0x90,0xD0,0x10],
+			flameYPositions:  [0xF0,0xF0,0xF0,0xF0]
+		}
+		
+		function $(dom)
+		{
+			return document.getElementById(dom);
+		}
+		
+		function init()
+		{
+			draw.fillStyle = "#000";
+			draw.fillRect(0,0,512,448);
+			
+			var x = 3
+			while (x >= 0)
+			{
+				candles[x] = {
+					x: data.flameXPositions[x],
+					y: data.flameYPositions[x],
+					frame: x
+				}
+				x--;
+			}
+			
+			window.requestAnimationFrame(loop);
+		}
+		
+		// SMW-like RNG (not accurate at all)
+		function getRand()
+		{
+			// Couldnt get it to work, temporary fix until i know whats wrong
+			random = (Math.floor(Math.random()*0xFFFF + random)) % 0xFFFF;
+			return random;
+			
+			random2 = ((random2 << 2) + random2) % 65536;
+			random2 = (random2 & 0xFF00) << 1
+			if (random2 & 0x2000)
+			{
+				random2 += 256;
+			}
+			random = ((((random2 & 0xFF00) >> 8) ^ (random2 & 0xFF)) + (((random2 & 0xFF00)) ^ ((random2 & 0xFF) << 8))) & 0xFFFF;
+			return random;
+		}
+		
+		function loop()
+		{
+		
+			$("frame").innerHTML = frame;
+			$("rng").innerHTML = random + " (" + (random - (random % 0xFF) >> 8) + "|" + (random & 0xFF) + ")";
+		
+			draw.fillStyle = "#000";
+			draw.fillRect(0,0,512,448);
+			
+			// draw candles
+			
+			for (var x = 0; x < 4; x++)
+			{
+				draw.drawImage(
+												$("candleframes"),
+												data.CastleFlameTiles[candles[x].frame%4]*32,
+												0,
+												32,
+												32,
+												candles[x].x*2,
+												(candles[x].y*2+128)%512,
+												32,
+												32
+											);
+				//console.log(candles[x].x*2,candles[x].y*2+256)
+				
+				if ($("debug").checked)
+				{
+					draw.fillStyle = colors[x%6];
+					draw.globalAlpha = 0.2;
+					draw.fillRect(candles[x].x*2,(candles[x].y*2+128)%512,32,32);
+					draw.globalAlpha = 1;
+					draw.fillText("*"+x,candles[x].x*2,(candles[x].y*2+128)%512+40);
+				}
+				
+				$("c"+(x+1)).innerHTML = "<td>"+x+"</td><td>"+candles[x].x+"</td><td>"+candles[x].y+"</td><td>"+candles[x].frame+"</td><td>0x"+(((candles[x].frame%2)*2+0xE2).toString(16).toUpperCase())+"</td><td>"+["","x-flip"][(Math.floor((candles[x].frame%4)/2))]+"</td>";
+			}
+			
+			if ($("paused").checked) {
+				window.requestAnimationFrame(loop);
+				return;
+			}
+			
+			// tick candles
+			
+			tick();
+		
+			frame++;
+			frame = frame % 256;
+			
+			window.requestAnimationFrame(loop);
+		}
+		
+		function tick() {
+			for (var x = 0; x < 4; x++)
+			{
+				var a = getRand() & 0x07;
+				if ((data.CastleFlameFlicker[a] & frame) == 0)
+				{
+					candles[x].frame = (candles[x].frame + 1) % 256
+				}
+			}
+			
+			
+		}
+		
+		draw = $("draw").getContext("2d");
+		window.requestAnimationFrame(init);
+		
+		
+	</script>
+</body>
+</html>
