@@ -7,6 +7,9 @@ This is just a viewer for 4bpp graphics. You need graphics and a palette file fo
 ## candles.html
 This thing simulates the candles in the background of castle levels. This is not 100% accurate, but looks pretty much the same as it does in SMW. Has cool features like the Debug display and frame advance stuff. I remember to use that to understand how it works in SMW so I can hack it to have more candles at different positions.
 
+## Fixes
+Just some fixes for SMW. Currently has Sprite Interaction Fixes for Thwomps and Thwimps.
+
 ## HEX2Asardblist
 I know, weird name. This one converts a Hexstring to a db-List for ASAR. Well, only if you separate the bytes like so:
 ```
