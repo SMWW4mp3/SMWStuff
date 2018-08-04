@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ARGB2SNESpal</title>
+</head>
+<body>
+<textarea id="in" onchange="parse()"></textarea>
+<textarea id="out"></textarea>
+</body>
+<script>
+
+function $(id) { return document.getElementById(id)};
+
+function argb2snesrgb(argb) {
+    
+    //let a = (parseInt(argb.substr(0,2), 16) & 0xF8);
+    let r = (parseInt(argb.substr(2,2), 16) & 0xF8) >> 3;
+    let g = (parseInt(argb.substr(4,2), 16) & 0xF8) >> 3;
+    let b = (parseInt(argb.substr(6,2), 16) & 0xF8) >> 3;
+    
+    return r + (g << 5) + (b << 10);
+    
+}
+
+function parse() {
+    let input = $("in").value.split("\n");
+    console.log(input);
+    let out = "";
+    input.forEach(function (v, i) {
+        let color = padLeft(argb2snesrgb(v).toString(16), 4);
+        out += color.substr(2,2) + color.substr(0,2);
+    })
+
+    $("out").value = out.toUpperCase();
+}
+
+function padLeft(str, length, character = "0") {
+    if (typeof str != "string") {
+        str.toString();
+    }
+    
+    while (str.length < length) {
+        str = character + str;
+    }
+    
+    return str;
+}
+
+</script>
+</html>
