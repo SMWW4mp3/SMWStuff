@@ -4,6 +4,9 @@ This is a collection of stuff I did for SMW Hacking purposes. I think nothing is
 ## 4bppDisplay
 This is just a viewer for 4bpp graphics. You need graphics and a palette file for this, which I included for you. Is a bit buggy, if it doesn't update the display just change the Palette and move the cursor over the left image.
 
+## ARGB2pal
+Converts a ARGB Palette to SNES-RGB. Left textfield is input, right one is the SNES-RGB output.
+
 ## candles.html
 This thing simulates the candles in the background of castle levels. This is not 100% accurate, but looks pretty much the same as it does in SMW. Has cool features like the Debug display and frame advance stuff. I remember to use that to understand how it works in SMW so I can hack it to have more candles at different positions.
 
