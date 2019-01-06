@@ -1,6 +1,9 @@
 # SMWStuff
 This is a collection of stuff I did for SMW Hacking purposes. I think nothing is really finished. Most of the stuff runs in a regular Browser, some stuff need a PHP-Server enviroment (just execute `php -S localhost:8080` folder with the php-file and navigate with your Browser to "localhost:8080" ).
 
+## LM3LevelFormats
+The version 3.00 of Lunar Magic implements new Level formats for SMW. This will allow you to scroll fast through the level formats to see their shape and where the screen exits are. Theres nothing more to it, really.
+
 ## 4bppDisplay
 This is just a viewer for 4bpp graphics. You need graphics and a palette file for this, which I included for you. Is a bit buggy, if it doesn't update the display just change the Palette and move the cursor over the left image.
 

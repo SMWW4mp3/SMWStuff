@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SMW Level formats</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: sans-serif;
+            }
+
+            html {
+                background: #000;
+            }
+
+            div {
+                background: #EEE;
+                padding: 8px;
+            }
+
+            canvas {
+                border: 1px solid #888;
+            }
+
+            main {
+                display: grid;
+                grid-template-columns: 75% 25%;
+            }
+
+
+            #sidebar {
+                border-left: 2px dashed #888;
+            }
+
+            h1 {
+                font-size: 125%;
+                margin: 0;
+            }
+            h2 {
+                font-size: 110%;
+                margin: 0;
+            }
+    </style>
+</head>
+<body>
+    <main>
+        <div id="radar_container">
+            <h1>Radar</h1>
+            <i>Note: 1 Pixel equals one block.</i><br>
+            <canvas id="radar" width="1" height="1"></canvas>
+        </div>
+        <div id="sidebar">
+            <h1>Tools/Settings</h1>
+            <input type="number" min=0 max=31 value=0 id="levelmode">
+            <label for="levelmode" title="Level format (bigger means more vertical, less horizontal)" style="text-decoration: underline">Level Mode (0x<span id="level_mode_hex">00</span>)</label><br>
+            <input type="color" value="#1199FF" id="bg_color">
+            <label for="bg_color">Background Color</label><br>
+            <div>
+                <h2>Sizes</h2>
+                Width: <span id="width_blocks">-</span> Blocks (Screens: <span id="width_screens">-</span> (0x<span id="width_screens_hex">-</span>) )<br>
+                Height: <span id="height_blocks">-</span> Blocks (Screens: <span id="height_screens">-</span> (0x<span id="height_screens_hex">-</span>) )
+            </div>
+            <div id="note_last_screen">
+                Note: Last screen exit is taller than the regular screen exit height.<br>
+                Normal Screen: <span id="note_last_screen_size_normal"></span><br>
+                Last Screen: <span id="note_last_screen_size"></span>
+            </div>
+            <div id="note_level_mode" style="color: #F00; font-weight: bold">
+                This Level Mode is marked as "Do not use".
+            </div>
+        </div>
+    </main>    
+</body>
+<script>
+// Bootleg jQuery selector from: https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Code_snippets/QuerySelector
+function $ (selector, el) {
+    if (!el) {el = document;}
+    return el.querySelector(selector);
+}
+function $$ (selector, el) {
+    if (!el) {el = document;}
+    return Array.prototype.slice.call(el.querySelectorAll(selector));
+}
+
+radar = $("#radar")
+ctx_radar = radar.getContext("2d")
+ctx_radar.textBaseline = "top"
+ctx_radar.font = "8px monospace"
+
+// LM Level modes (ignores Vertical level) in tiles
+level_modes = [
+    { w: 512, h: 0x1B , sh: 27}, { w: 512, h: 0x1C, sh: 28 }, { w: 480, h: 0x1D , sh: 29 }, { w: 448, h: 0x20 , sh: 32 },
+    { w: 416, h: 0x22 , sh: 34}, { w: 384, h: 0x25, sh: 37 }, { w: 368, h: 0x26 , sh: 38 }, { w: 352, h: 0x28 , sh: 40 },
+    { w: 336, h: 0x2A , sh: 42}, { w: 320, h: 0x2C, sh: 44 }, { w: 304, h: 0x2F , sh: 47 }, { w: 288, h: 0x31 , sh: 49 },
+    { w: 272, h: 0x34 , sh: 52}, { w: 256, h: 0x38, sh: 28 }, { w: 240, h: 0x3B , sh: 29 }, { w: 224, h: 0x40 , sh: 32 },
+    { w: 208, h: 0x44 , sh: 34}, { w: 192, h: 0x4A, sh: 37 }, { w: 176, h: 0x51 , sh: 40 }, { w: 160, h: 0x59 , sh: 29 },
+    { w: 144, h: 0x63 , sh: 33}, { w: 128, h: 0x70, sh: 28 }, { w: 112, h: 0x80 , sh: 32 }, { w:  96, h: 0x95 , sh: 29 },
+    { w:  80, h: 0xB3 , sh: 29}, { w:  64, h: 0xE0, sh: 28 }, { w:  48, h: 0x12A, sh: 29 }, { w:  32, h: 0x1C0, sh: 28 },
+    { w:  16, h: 0x380, sh: 28}, { w: 512, h: 0x10, sh: 16 }, { w: 512, h: 0x0F , sh: 15 }, { w: 512, h: 0x0E , sh: 14 }
+]
+
+start_y_pos = 0;
+start_x_pos = 5;
+
+function pad(text, to, chr) {
+
+    if (chr == undefined) {
+        chr = " "
+    }
+
+    if (to == 0) {
+        to = text.length + (text.length % 2)
+    }
+    while (text.length < to) {
+        text = chr + text;
+    }
+    return text
+}
+
+function hex(num) {
+    return pad(num.toString(16), 0, "0").toUpperCase()
+}
+
+function levelmode_change() {
+    generate()
+}
+
+function levelmode_wheel_change(e) {
+
+    let v = parseInt($("#levelmode").value)
+    
+    if (e.deltaY > 0) {
+        v++
+    } else {
+        v--
+    }
+        
+    if (v >= parseInt(e.target.max)) {
+        v = parseInt(e.target.max)
+    }
+    
+    if (v <= parseInt(e.target.min)) {
+        v = parseInt(e.target.min)
+    }
+    
+    $("#levelmode").value = v
+    
+    generate()
+}
+
+function generate() {
+    
+    let levelmode = parseInt($("#levelmode").value)
+    
+    let lwidth = level_modes[levelmode].w
+    let lheight = level_modes[levelmode].h
+    let lwidth_screen = 16 // level_modes[levelmode].sw
+    let lheight_screen = level_modes[levelmode].sh
+    
+    // Setting canvas size
+    
+    radar.width = lwidth
+    radar.height = lheight
+   
+    // Bg color
+   
+    ctx_radar.fillStyle = $("#bg_color").value
+    ctx_radar.fillRect(0, 0, radar.width, radar.height)
+   
+    // Screens
+    last_screen_irregular = false
+    last_screen_size = 0
+    for (let x = 0; x * lwidth_screen <= lwidth; x++) {
+        for (let y = 0; y * lheight_screen < lheight; y++) {
+            let screen_number = x + ((lwidth / lwidth_screen) * y)
+            ctx_radar.fillStyle = ["rgba(0,0,0,0)","rgba(0,0,0,0.25)"][(x + (y % 2)) % 2]
+            
+            if (lheight_screen * (y + 1) <= lheight) {
+                ctx_radar.fillRect(x * lwidth_screen, y * lheight_screen, lwidth_screen, lheight_screen)
+                ctx_radar.fillStyle = "#FFFFFF"
+                ctx_radar.fillText("" + hex(screen_number), x * lwidth_screen, y * lheight_screen + 8)
+            } else {
+                ctx_radar.fillStyle = ["rgba(0,0,0,0)","rgba(0,0,0,0.25)"][(x + ((y-1) % 2)) % 2]
+                ctx_radar.fillRect(x * lwidth_screen, y * lheight_screen, lwidth_screen, radar.height)      
+                last_screen_irregular = true
+                last_screen_size = lheight - y * lheight_screen + lheight_screen
+                break
+            }
+            
+        }
+    }
+    
+    // Textlabels
+    $("#width_blocks").innerHTML = lwidth
+    $("#width_screens").innerHTML = Math.floor(lwidth / lwidth_screen)
+    $("#width_screens_hex").innerHTML = hex(Math.floor(lwidth / lwidth_screen))
+    
+    $("#height_blocks").innerHTML = lheight
+    $("#height_screens").innerHTML = Math.floor(lheight / lheight_screen)
+    $("#height_screens_hex").innerHTML = hex(Math.floor(lheight / lheight_screen))
+    
+    $("#level_mode_hex").innerHTML = hex(levelmode)
+    
+    $("#note_last_screen").style.display = ["none", "block"][last_screen_irregular+0]
+    $("#note_last_screen_size").innerHTML = last_screen_size
+    $("#note_last_screen_size_normal").innerHTML = lheight_screen
+    
+    $("#note_level_mode").style.display = ["none", "block"][(levelmode >= 29)+0]
+    
+}
+
+$("#levelmode").onchange = levelmode_change
+$("#levelmode").onclick = levelmode_change
+$("#levelmode").onwheel = levelmode_wheel_change
+$("#bg_color").onchange = levelmode_change
+generate()
+</script>
+</html>
