@@ -21,11 +21,23 @@
                 border: 1px solid #888;
             }
 
+            #main {
+                border-radius: 4px;
+            }
+            
             main {
                 display: grid;
-                grid-template-columns: 75% 25%;
+                grid-template-columns: auto 25%;
+                overflow: hidden;
+                
             }
 
+            #radar_container {
+                display: grid;
+                grid-template-columns: 16px auto;
+                grid-template-rows: 16px auto;
+                
+            }
 
             #sidebar {
                 border-left: 2px dashed #888;
@@ -35,42 +47,178 @@
                 font-size: 125%;
                 margin: 0;
             }
+            
             h2 {
                 font-size: 110%;
                 margin: 0;
             }
+            
+            #scale_empty {
+                width: 16px;
+                height: 16px;
+            }
+            
+            #scale_h {
+                padding: 2px;
+                height: 16px;
+                font: 12px monospace;
+                border-left: 2px solid #000;
+                border-right: 2px solid #000;
+                overflow: hidden;
+            }
+            #scale_v {
+                padding: 2px;
+                height: 16px;
+                rotate: -90deg;
+                transform-origin: top left;
+                font: 12px monospace;
+                border-left: 2px solid #000;
+                border-right: 2px solid #000;
+                overflow: hidden;
+            }
+            #radar_box {
+                overflow: scroll;
+                padding: 0;
+                max-height: 93vh;
+                background: #000;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            
+            th {
+                text-align: left;
+                border-bottom: 1px solid #888;
+            }
+            
+            tr {
+                background: rgba(0,0,0,0.1);
+            }
+            
+            td {
+                
+                border-bottom: 1px solid #888;
+            }
+            
+            #mouse_tooltip {
+                position: fixed;
+                border: 2px solid #888;
+                font: 100% monospace;
+                font-weight: bold;
+                z-index: 11111111;
+            }
+            
+            .p-0 {
+                padding: 0;
+            }
+            
+            .info {
+                border: 1px solid #19F;
+                background: #8DF;
+                color: #000;
+            }
+            
+            .note {
+                border: 1px solid #FE0;
+                background: #FE8;
+            }
     </style>
 </head>
 <body>
+<div id="main">
     <main>
-        <div id="radar_container">
-            <h1>Radar</h1>
-            <i>Note: 1 Pixel equals one block.</i><br>
+
+        <div id="radar_box">
             <canvas id="radar" width="1" height="1"></canvas>
         </div>
+
         <div id="sidebar">
             <h1>Tools/Settings</h1>
+            <div class="p-0 info">Tip: You can use the mouse wheel on the input fields below to change the values!</div>
+            <hr>
             <input type="number" min=0 max=31 value=0 id="levelmode">
-            <label for="levelmode" title="Level format (bigger means more vertical, less horizontal)" style="text-decoration: underline">Level Mode (0x<span id="level_mode_hex">00</span>)</label><br>
+            <label for="levelmode" title="Level format (bigger means more vertical, less horizontal)" style="text-decoration: underline">Level Mode (0x<span id="level_mode_hex">00</span>)</label>
+            <hr>
             <input type="color" value="#1199FF" id="bg_color">
-            <label for="bg_color">Background Color</label><br>
-            <div>
-                <h2>Sizes</h2>
-                Width: <span id="width_blocks">-</span> Blocks (Screens: <span id="width_screens">-</span> (0x<span id="width_screens_hex">-</span>) )<br>
-                Height: <span id="height_blocks">-</span> Blocks (Screens: <span id="height_screens">-</span> (0x<span id="height_screens_hex">-</span>) )
+            <label for="bg_color">Background Color</label>
+            <hr>
+            <label for="view_mode">View:</label>
+            <select id="view_mode">
+                <option> - none - </option>
+                <option selected>Screen Exits</option>
+                <option>Sub Screens</option>
+            </select>
+            <hr>
+            <label for="zoom">Zoom:</label>
+            <select id="zoom">
+                <option>6,25% | 1:16 (1px = 1 Block)</option>
+                <option selected>12,5% | 1:8</option>
+                <option>25% | 1:4</option>
+                <option>50% | 1:2</option>
+                <option>100% | 1:1 (16px = 1 Block)</option>
+            </select>
+            <hr>
+            <input type="checkbox" id="layer2">
+            <label for="layer2">Layer 2</label>
+            <hr>
+            
+            <input type="checkbox" id="checkerboard">
+            <label for="checkerboard">Show block overlay</label>
+            <hr>
+            <div class="p-0">
+                <table>
+                    <tr>
+                        <th></th>
+                        <th>Blocks</th>
+                        <th>Screens</th>
+                        <th>(in Hex)</th>
+                    </tr>
+                    <tr>
+                        <td>Width</td>
+                        <td><span id="width_blocks">-</span></td>
+                        <td><span id="width_screens">-</span></td>
+                        <td>0x<span id="width_screens_hex">-</span></td>
+                    </tr>
+                    <tr>
+                        <td>Height</td>
+                        <td><span id="height_blocks">-</span></td>
+                        <td><span id="height_screens">-</span></td>
+                        <td>0x<span id="height_screens_hex">-</span></td>
+                    </tr>
+                    <tr>
+                        <td>Area</td>
+                        <td><span id="area_blocks">-</span></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
             </div>
-            <div id="note_last_screen">
-                Note: Last screen exit is taller than the regular screen exit height.<br>
+            <div id="note_last_screen" class="note p-0">
+                <strong>Note:</strong> Last screen exit is taller than the regular screen exit height.<br>
                 Normal Screen: <span id="note_last_screen_size_normal"></span><br>
                 Last Screen: <span id="note_last_screen_size"></span>
             </div>
-            <div id="note_level_mode" style="color: #F00; font-weight: bold">
-                This Level Mode is marked as "Do not use".
+            <div id="note_subscreen" class="note p-0">
+                <strong>Note:</strong> Last subscreen is shorter than a regular subscreen. ( <span id="note_subscreen_value"></span> / 16 Blocks)
+            </div>
+            <div id="note_layer2_screen" class="note p-0" title="Level width must be divisible by 16 Blocks">
+                <strong>Note:</strong> The width of the level was reduced by one screen due to limitations of SMW engine.
+            </div>
+            <div id="note_level_mode" style="color: #F00; font-weight: bold" class="note p-0">
+                <strong>Note:</strong> This Level Mode is marked as "Do not use".
             </div>
         </div>
-    </main>    
+    </main>  
+</div>    
+<div id="mouse_tooltip">
+    X: <span id="mouse_tooltip_x"></span><br>
+    Y: <span id="mouse_tooltip_y"></span>
+</div>
 </body>
 <script>
+
 // Bootleg jQuery selector from: https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Code_snippets/QuerySelector
 function $ (selector, el) {
     if (!el) {el = document;}
@@ -125,6 +273,8 @@ function levelmode_change() {
 }
 
 function levelmode_wheel_change(e) {
+    e.preventDefault()
+    e.target.blur()
 
     let v = parseInt($("#levelmode").value)
     
@@ -147,25 +297,31 @@ function levelmode_wheel_change(e) {
     generate()
 }
 
-function generate() {
+function select_wheel_support(e) {
+    e.preventDefault()
+    let i = e.target.selectedIndex
     
-    let levelmode = parseInt($("#levelmode").value)
+    if (e.deltaY > 0) {
+        i++
+    } else {
+        i--
+    }
+        
+    if (i >= e.target.length) {
+        i = e.target.length - 1
+    }
     
-    let lwidth = level_modes[levelmode].w
-    let lheight = level_modes[levelmode].h
-    let lwidth_screen = 16 // level_modes[levelmode].sw
-    let lheight_screen = level_modes[levelmode].sh
+    if (i <= 0) {
+        i = 0
+    }
     
-    // Setting canvas size
+    e.target.selectedIndex = i
     
-    radar.width = lwidth
-    radar.height = lheight
-   
-    // Bg color
-   
-    ctx_radar.fillStyle = $("#bg_color").value
-    ctx_radar.fillRect(0, 0, radar.width, radar.height)
-   
+    generate()
+}
+
+function draw_screen_exits(lwidth_screen, lwidth, lheight_screen, lheight, zoom) {
+
     // Screens
     last_screen_irregular = false
     last_screen_size = 0
@@ -175,12 +331,12 @@ function generate() {
             ctx_radar.fillStyle = ["rgba(0,0,0,0)","rgba(0,0,0,0.25)"][(x + (y % 2)) % 2]
             
             if (lheight_screen * (y + 1) <= lheight) {
-                ctx_radar.fillRect(x * lwidth_screen, y * lheight_screen, lwidth_screen, lheight_screen)
+                ctx_radar.fillRect(x * lwidth_screen * zoom, y * lheight_screen * zoom, lwidth_screen * zoom, lheight_screen * zoom)
                 ctx_radar.fillStyle = "#FFFFFF"
-                ctx_radar.fillText("" + hex(screen_number), x * lwidth_screen, y * lheight_screen + 8)
+                ctx_radar.fillText("" + hex(screen_number), x * lwidth_screen * zoom, y * lheight_screen * zoom + 8 * zoom)
             } else {
                 ctx_radar.fillStyle = ["rgba(0,0,0,0)","rgba(0,0,0,0.25)"][(x + ((y-1) % 2)) % 2]
-                ctx_radar.fillRect(x * lwidth_screen, y * lheight_screen, lwidth_screen, radar.height)      
+                ctx_radar.fillRect(x * lwidth_screen * zoom, y * lheight_screen * zoom, lwidth_screen * zoom, radar.height)      
                 last_screen_irregular = true
                 last_screen_size = lheight - y * lheight_screen + lheight_screen
                 break
@@ -188,6 +344,93 @@ function generate() {
             
         }
     }
+    
+    return last_screen_size
+}
+
+function draw_sub_screens(lwidth, lheight, zoom) {
+
+    ctx_radar.font = zoom * 4 + "px monospace"
+
+    // Screens
+
+    for (let x = 0; x <= lwidth; x+=16) {
+        for (let y = 0; y <= lheight; y+=16) {
+        
+            let subscreen_x = Math.floor(x / 16)
+            let subscreen_y = Math.floor(y / 16)
+            ctx_radar.fillStyle = ["rgba(0,0,0,0)","rgba(0,0,0,0.25)"][(x/16 + (y/16 % 2)) % 2]
+
+            ctx_radar.fillRect(x * zoom, y * zoom, 16 * zoom, 16 * zoom)
+            ctx_radar.fillStyle = "#FFFFFF"
+            ctx_radar.fillText("" + hex(subscreen_x) + ":" + hex(subscreen_y), x * zoom, y * zoom + 4 * zoom)
+            
+            if (y + 16 > lheight) {
+                last_screen_irregular = lheight - y
+            }
+            
+        }
+    }
+    
+    return last_screen_irregular
+}
+
+function generate() {
+    
+    let levelmode = parseInt($("#levelmode").value)
+    let zoom = Math.pow(2, $("#zoom").selectedIndex)
+    let view = ["", "sexits", "subscr"][$("#view_mode").selectedIndex]
+    
+    let lwidth = level_modes[levelmode].w
+    let lheight = level_modes[levelmode].h
+    let lwidth_screen = 16 // level_modes[levelmode].sw
+    let lheight_screen = level_modes[levelmode].sh
+    
+    // Layer 2 support: just divide the hscreen amount by 2 and floor it.
+    layer2_info = false
+    if ($("#layer2").checked !== false) {
+        lwidth = Math.floor(lwidth / 2) - (Math.floor(lwidth / 2) % 16)
+        layer2_info = ((lwidth % 32) !== 0)
+    }
+    
+    // Setting canvas size
+    
+    radar.width = lwidth * zoom
+    radar.height = lheight * zoom
+   
+    // Bg color
+   
+    ctx_radar.fillStyle = $("#bg_color").value
+    ctx_radar.fillRect(0, 0, radar.width, radar.height)
+   
+    // Setting font
+    ctx_radar.font = zoom * 8 + "px monospace"
+   
+    // Views
+    
+    let data_sexits = false
+    let data_subscr = false
+    
+    switch (view) {
+        case "sexits":
+            data_sexits = draw_screen_exits(lwidth_screen, lwidth, lheight_screen, lheight, zoom)
+            break;
+        case "subscr":
+            data_subscr = draw_sub_screens(lwidth, lheight, zoom)
+            
+        default:
+    }
+   
+    // Checkerboard Pattern
+    if ($("#checkerboard").checked !== false) {
+        for (let x = 0; x <= lwidth; x += 1) {
+            for (let y = 0; y <= lheight; y += 1) {
+                ctx_radar.fillStyle = ["rgba(0,0,0,0)", "rgba(0,0,0,0.1)"][((x % 2) + (y % 2)) % 2]
+                ctx_radar.fillRect(x*zoom,y*zoom,zoom,zoom)
+            }
+        }
+    }
+    
     
     // Textlabels
     $("#width_blocks").innerHTML = lwidth
@@ -198,13 +441,62 @@ function generate() {
     $("#height_screens").innerHTML = Math.floor(lheight / lheight_screen)
     $("#height_screens_hex").innerHTML = hex(Math.floor(lheight / lheight_screen))
     
+    if ($("#layer2").checked !== false) {
+        $('#area_blocks').innerHTML = lwidth * lheight + "x2"
+    } else {
+        $('#area_blocks').innerHTML = lwidth * lheight
+    }
+    
     $("#level_mode_hex").innerHTML = hex(levelmode)
     
-    $("#note_last_screen").style.display = ["none", "block"][last_screen_irregular+0]
-    $("#note_last_screen_size").innerHTML = last_screen_size
-    $("#note_last_screen_size_normal").innerHTML = lheight_screen
+    if (data_sexits !== false && data_sexits > 0) {
+        $("#note_last_screen").style.display = "block"
+        $("#note_last_screen_size").innerHTML = data_sexits
+        $("#note_last_screen_size_normal").innerHTML = lheight_screen
+    } else {
+        $("#note_last_screen").style.display = "none"
+    }
+    
+    if (data_subscr !== false && data_subscr > 0) {
+        $("#note_subscreen").style.display = "block"
+        $("#note_subscreen_value").innerHTML = data_subscr
+    } else {
+        $("#note_subscreen").style.display = "none"
+    }
+    
+    if (layer2_info) {
+        $("#note_layer2_screen").style.display = "block"
+    } else {
+        $("#note_layer2_screen").style.display = "none"
+    }
     
     $("#note_level_mode").style.display = ["none", "block"][(levelmode >= 29)+0]
+    
+}
+
+function mouse_overlay(e) {
+    $("#mouse_tooltip").style.display = "block"
+    $("#mouse_tooltip").style.top = e.clientY + 8 + "px"
+    $("#mouse_tooltip").style.left = e.clientX + "px"
+    
+    let zoom = Math.pow(2, $("#zoom").selectedIndex)
+    let x = Math.floor(e.offsetX / zoom) 
+    let y = Math.floor(e.offsetY / zoom)
+    let levelmode = parseInt($("#levelmode").value)
+    
+    if (x >= (level_modes[levelmode].w / (($("#layer2").checked !== false) + 1)) || y >= level_modes[levelmode].h) {
+        x = "Invalid"
+        y = "Area"
+    }
+    
+    console.log(e)
+    
+    $("#mouse_tooltip_x").innerHTML =  x
+    $("#mouse_tooltip_y").innerHTML =  y
+}
+
+function hide_overlay(e) {
+    $("#mouse_tooltip").style.display = "none"
     
 }
 
@@ -212,6 +504,16 @@ $("#levelmode").onchange = levelmode_change
 $("#levelmode").onclick = levelmode_change
 $("#levelmode").onwheel = levelmode_wheel_change
 $("#bg_color").onchange = levelmode_change
+$("#zoom").onwheel = select_wheel_support
+$("#zoom").onchange = levelmode_change
+$("#view_mode").onwheel = select_wheel_support
+$("#view_mode").onchange = levelmode_change
+$("#layer2").onchange = levelmode_change
+$("#checkerboard").onchange = levelmode_change
+$("#radar_box").onmousemove = mouse_overlay
+$("#radar_box").onmouseleave = hide_overlay
+hide_overlay()
+
 generate()
 </script>
 </html>
