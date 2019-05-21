@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>wiiqwertyuiop_multiplication_routine</title>
+<style>
+* {
+    font-family: sans-serif;
+}
+
+code, pre {
+    font-family: monospace;
+    background: #DDD;
+    padding-left: 16px;
+    border-left: 2px solid blue;
+}
+</style>
+</head>
+<body>
+<h1>wiiqwertyuiop_multiplication_routine</h1>
+<i>Note: This ignores that the SNES is only capable of 16-bit numbers.</i><br>
+<div>
+    <strong>Known Bugs (of the routine):</strong>
+    <ul>
+        <li>Multiplying the multiplicant with 0 doesn't give you a correct value.</li>
+        <li>If the number overflows the 16-Bit value the result will be wrong.</li>
+    </ul>
+    
+</div>
+<fieldset>
+<legend>Inputs</legend>
+<label for="ram00">RAM $00 (multiplicant)</label><br>
+<input type="number" id="ram00" min=0 value=6 max=65535 onclick="calculate()"><br>
+<label for="ram01">RAM $02 (multiplier)</label><br>
+<input type="number" id="ram01" min=0 value=7 max=65535 onclick="calculate()"><br>
+<label for="a">Accumulator A</label><br>
+<input type="number" id="a" min=0 value=0 max=65535 onclick="calculate()"><br>
+<label for="apply_fix" title="Only fixes the multiplicant == 0 issue.">Use W4mp3 bugfixed version</label>
+<input type="checkbox" id="apply_fix" onclick="calculate()"><br>
+<hr>
+<label for="result">Result</label>
+<input type="number" id="result" value=0 readonly="readonly" style="border: 2px solid orange;"><br>
+</fieldset>
+<h2>Simulated Code Tracelog (Steps: <span id="steps">0</span>)</h2>
+<table id="tracelog" border="1">
+<thead>
+    <tr>
+        <th>PC</th>
+        <th>Opcode</th>
+        <th>Param</th>
+        <th>A</th>
+        <th>c</th>
+        <th>o</th>
+        <th>z</th>
+        <th>RAM</th>
+    </tr>
+</thead>
+<tbody id="tracelog_body">
+    
+</tbody>
+</table>
+
+<h2>Original Source</h2>
+<a href="https://www.smwcentral.net/?p=viewthread&t=62286&page=1&pid=1055103#p1055103">wiiqwertyuiop - SMW Central - Advanced Documentation and ASM Code Library</a>
+<hr>
+<pre>
+; Multiplication routine - works with 8-bit and 16-bit numbers.
+; It won't however give a 24-bit number (it could probably be edited to do so).
+;
+; Input:
+; A should be 00(00) when entering (unless you want to add the multiplied number to what is already in A)
+; $00 should be the  number you want to multiply and $02 is what you are multiplying it by. $00 * $02
+; You can enter in either 8-bit or 16-bit mode A
+;
+; Ouput:
+; Result will go in A
+; $00 and $02 will no longer hold their original values
+;
+
+Multiply:
+-
+LSR $02
+BEQ .end
+BCC +
+CLC
+ADC $00
++
+ASL $00
+BRA -
+
+.end
+CLC
+ADC $00
+RTS
+</pre>
+
+<h2>W4mp3 bugfixed version</h2>
+<i>This does not fix the overflow issue properly, instead you just get 0xFFFF back. Also is slightly slower.</i>
+<hr>
+<pre>
+Function_Multiply_Routine:
+; Source:
+; https://www.smwcentral.net/?p=viewthread&t=62286&page=1&pid=1055103#p1055103
+; by wiiqwertyuiop
+; Slightly adapted to my coding style and commented.
+;
+; Multiplication routine - works with 16-bit numbers.
+; It won't however give a 24-bit number (it could probably be edited to do so).
+; This is how it calculates it in human readable form:
+; A + ($00 * $02)
+;
+; I've ported this routine to Javascript to understand it more easily.
+; 
+; Entry conditions:
+;   JSR
+;   A: Should be always 16-bit
+;   XY: Not used
+;
+; Parameters:
+;   A: Base value. This is basically added after the Multiplication.
+;   $00: Muliplicant
+;   $02: Multiplier
+;
+; Returns:
+;   A: Result. Keep in mind this only gives you a 16 bit number, overflow will
+;      result in a consistent wrong value 0xFFFF.
+;
+; Notes:
+;   $00 and $02 will be modified by the routine.
+;
+PHA
+LDA $00
+BEQ .itsZeroDude
+LDA $02
+BEQ .itsZeroDude
+PLA
+
+.loop
+LSR $02     ; Divide $02 by 2
+BEQ .end    ; If A == x0000 goto .end
+BCC .multi  ; elseif carry_set goto .multiply
+CLC         ; clear carry
+ADC $00     ; Add $00 to A
+BVS .overflow
+.multi:
+ASL $00     ; Multiply $00 by 2
+BRA .loop   ; goto .loop
+
+.end
+CLC         ; clear carry
+ADC $00     ; Add $00 with A
+BVS .overflow
+RTS
+.overflow:
+LDA #$FFFF
+RTS
+.itsZeroDude:
+PLA
+RTS
+</pre>
+<script src="a.js"></script>
+</body>
+</html>

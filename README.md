@@ -37,3 +37,5 @@ This was a attempt to create a tool to customize many different aspects of SMW, 
 This tool was intended to enchance the user experience in RPGHacker's VWF Message Patch by giving you a "simple to use" interface with a simulated version of the Patch included in the Editor so you can test the message inside your browser. Sadly I couldn't work on that thing anymore due to work. The GrafixViewer does not work, check out the 4bppDisplay for something that works.
 
 
+## wiiqwertyuiop_multiplication
+This is a port of a Mulitplication Routine of wiiqwertyuiop to javascript. This is just for me to understand how that one works, it just looks weird at the first glance. This one contains a very crappy simulated SNES-CPU and shows you how it would "run".
