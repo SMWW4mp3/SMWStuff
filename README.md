@@ -36,6 +36,8 @@ This was a attempt to create a tool to customize many different aspects of SMW, 
 ## VWF Message generator
 This tool was intended to enchance the user experience in RPGHacker's VWF Message Patch by giving you a "simple to use" interface with a simulated version of the Patch included in the Editor so you can test the message inside your browser. Sadly I couldn't work on that thing anymore due to work. The GrafixViewer does not work, check out the 4bppDisplay for something that works.
 
+## l2_crashing_wave
+UberASMTool Level code which makes Layer 2 behave like a crashing Wave comming from behind.taking the player and sprites down with it. I show this in action in episode 10 of TheProject and in a separate video (which I haven't released yet).
 
 ## wiiqwertyuiop_multiplication
 This is a port of a Mulitplication Routine of wiiqwertyuiop to javascript. This is just for me to understand how that one works, it just looks weird at the first glance. This one contains a very crappy simulated SNES-CPU and shows you how it would "run".
